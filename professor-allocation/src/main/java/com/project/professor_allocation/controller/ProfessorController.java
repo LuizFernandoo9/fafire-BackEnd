@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.project.professor_allocation.dto.ProfessorDTO;
+import com.project.professor_allocation.exception.ApiError;
 import com.project.professor_allocation.model.Professor;
 import com.project.professor_allocation.service.ProfessorService;
 
@@ -41,9 +43,10 @@ public class ProfessorController {
     	@ApiResponse(responseCode = "200", description = "OK")
     })
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Professor>> findAll(@RequestParam(name = "name", required = false) String name) {
-        List<Professor> professors = name != null ? professorService.findAll() : professorService.findByName(name);
-        return new ResponseEntity<>(professors, HttpStatus.OK);
+    public ResponseEntity<List<ProfessorDTO>> findAll(@RequestParam(name = "name", required = false) String name) {
+        List<Professor> professors = (name == null) ? professorService.findAll() : professorService.findByName(name);
+        List<ProfessorDTO> response = professors.stream().map(ProfessorDTO::fromEntity).toList();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @Operation(summary = "Find a professor")
@@ -53,13 +56,14 @@ public class ProfessorController {
     	@ApiResponse(responseCode = "404", description = "Not Found", content = @Content)
     })
     @GetMapping(path = "/{professor_id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Professor> findById(@PathVariable(name = "professor_id") Long id) {
+    public ResponseEntity<?> findById(@PathVariable(name = "professor_id") Long id) {
         Professor professor = professorService.findById(id);
         if (professor == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } else {
-            return new ResponseEntity<>(professor, HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiError(HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.getReasonPhrase(), "Professor não encontrado."));
         }
+
+        return new ResponseEntity<>(ProfessorDTO.fromEntity(professor), HttpStatus.OK);
     }
 
     @Operation(summary = "Find professors by department")
@@ -68,9 +72,10 @@ public class ProfessorController {
     	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content)
     })
     @GetMapping(path = "/department/{department_id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Professor>> findByDepartment(@PathVariable(name = "department_id") Long id) {
+    public ResponseEntity<List<ProfessorDTO>> findByDepartment(@PathVariable(name = "department_id") Long id) {
         List<Professor> professors = professorService.findByDepartment(id);
-        return new ResponseEntity<>(professors, HttpStatus.OK);
+        List<ProfessorDTO> response = professors.stream().map(ProfessorDTO::fromEntity).toList();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @Operation(summary = "Save a professor")
@@ -79,9 +84,9 @@ public class ProfessorController {
     	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content)
     })
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Professor> save(@RequestBody Professor professor) {
-        professor = professorService.save(professor);
-        return new ResponseEntity<>(professor, HttpStatus.CREATED);
+    public ResponseEntity<ProfessorDTO> save(@RequestBody ProfessorDTO professorDTO) {
+        Professor professor = professorService.save(ProfessorDTO.toEntity(professorDTO));
+        return new ResponseEntity<>(ProfessorDTO.fromEntity(professor), HttpStatus.CREATED);
     }
 
     @Operation(summary = "Update a professor")
@@ -91,15 +96,16 @@ public class ProfessorController {
     	@ApiResponse(responseCode = "404", description = "Not Found", content = @Content)
     })
     @PutMapping(path = "/{professor_id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Professor> update(@PathVariable(name = "professor_id") Long id,
-                                            @RequestBody Professor professor) {
-        professor.setId(id);
-        professor = professorService.update(professor);
+    public ResponseEntity<?> update(@PathVariable(name = "professor_id") Long id,
+                                            @RequestBody ProfessorDTO professorDTO) {
+        professorDTO.setId(id);
+        Professor professor = professorService.update(ProfessorDTO.toEntity(professorDTO));
         if (professor == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } else {
-            return new ResponseEntity<>(professor, HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiError(HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.getReasonPhrase(), "Professor não encontrado."));
         }
+
+        return new ResponseEntity<>(ProfessorDTO.fromEntity(professor), HttpStatus.OK);
     }
 
     @Operation(summary = "Delete a professor")
