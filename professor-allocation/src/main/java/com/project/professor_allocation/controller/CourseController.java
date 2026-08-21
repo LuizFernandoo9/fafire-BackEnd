@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.project.professor_allocation.dto.CourseDTO;
+import com.project.professor_allocation.exception.ApiError;
 import com.project.professor_allocation.model.Course;
 import com.project.professor_allocation.service.CourseService;
 
@@ -40,9 +42,10 @@ public class CourseController {
     	@ApiResponse(responseCode = "200", description = "OK")
     })
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Course>> findAll() {
+    public ResponseEntity<List<CourseDTO>> findAll() {
         List<Course> courses = courseService.findAll();
-        return new ResponseEntity<>(courses, HttpStatus.OK);
+        List<CourseDTO> response = courses.stream().map(CourseDTO::fromEntity).toList();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @Operation(summary = "Find a course")
@@ -52,13 +55,14 @@ public class CourseController {
     	@ApiResponse(responseCode = "404", description = "Not Found", content = @Content)
     })
     @GetMapping(path = "/{course_id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Course> findById(@PathVariable(name = "course_id") Long id) {
+    public ResponseEntity<?> findById(@PathVariable(name = "course_id") Long id) {
         Course course = courseService.findById(id);
         if (course == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } else {
-            return new ResponseEntity<>(course, HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiError(HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.getReasonPhrase(), "Curso não encontrado."));
         }
+
+        return new ResponseEntity<>(CourseDTO.fromEntity(course), HttpStatus.OK);
     }
 
     @Operation(summary = "Save a course")
@@ -67,9 +71,9 @@ public class CourseController {
     	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content)
     })
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Course> save(@RequestBody Course course) {
-        course = courseService.save(course);
-        return new ResponseEntity<>(course, HttpStatus.CREATED);
+    public ResponseEntity<CourseDTO> save(@RequestBody CourseDTO courseDTO) {
+        Course course = courseService.save(CourseDTO.toEntity(courseDTO));
+        return new ResponseEntity<>(CourseDTO.fromEntity(course), HttpStatus.CREATED);
     }
 
     @Operation(summary = "Update a course")
@@ -79,15 +83,16 @@ public class CourseController {
     	@ApiResponse(responseCode = "404", description = "Not Found", content = @Content)
     })
     @PutMapping(path = "/{course_id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Course> update(@PathVariable(name = "course_id") Long id,
-                                         @RequestBody Course course) {
-        course.setId(id);
-        course = courseService.update(course);
+    public ResponseEntity<?> update(@PathVariable(name = "course_id") Long id,
+                                         @RequestBody CourseDTO courseDTO) {
+        courseDTO.setId(id);
+        Course course = courseService.update(CourseDTO.toEntity(courseDTO));
         if (course == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } else {
-            return new ResponseEntity<>(course, HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiError(HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.getReasonPhrase(), "Curso não encontrado."));
         }
+
+        return new ResponseEntity<>(CourseDTO.fromEntity(course), HttpStatus.OK);
     }
 
     @Operation(summary = "Delete a course")

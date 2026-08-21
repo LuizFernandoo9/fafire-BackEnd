@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.project.professor_allocation.dto.DepartmentDTO;
+import com.project.professor_allocation.exception.ApiError;
 import com.project.professor_allocation.model.Department;
 import com.project.professor_allocation.service.DepartmentService;
 
@@ -40,9 +42,10 @@ public class DepartmentController {
     	@ApiResponse(responseCode = "200", description = "OK")
     })
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Department>> findAll() {
+    public ResponseEntity<List<DepartmentDTO>> findAll() {
         List<Department> departments = departmentService.findAll();
-        return new ResponseEntity<>(departments, HttpStatus.OK);
+        List<DepartmentDTO> response = departments.stream().map(DepartmentDTO::fromEntity).toList();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @Operation(summary = "Find a department")
@@ -52,13 +55,14 @@ public class DepartmentController {
     	@ApiResponse(responseCode = "404", description = "Not Found", content = @Content)
     })
     @GetMapping(path = "/{department_id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Department> findById(@PathVariable(name = "department_id") Long id) {
+    public ResponseEntity<?> findById(@PathVariable(name = "department_id") Long id) {
         Department department = departmentService.findById(id);
         if (department == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } else {
-            return new ResponseEntity<>(department, HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiError(HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.getReasonPhrase(), "Departamento não encontrado."));
         }
+
+        return new ResponseEntity<>(DepartmentDTO.fromEntity(department), HttpStatus.OK);
     }
 
     @Operation(summary = "Save a department")
@@ -67,9 +71,9 @@ public class DepartmentController {
     	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content)
     })
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Department> save(@RequestBody Department department) {
-        department = departmentService.save(department);
-        return new ResponseEntity<>(department, HttpStatus.CREATED);
+    public ResponseEntity<DepartmentDTO> save(@RequestBody DepartmentDTO departmentDTO) {
+        Department department = departmentService.save(DepartmentDTO.toEntity(departmentDTO));
+        return new ResponseEntity<>(DepartmentDTO.fromEntity(department), HttpStatus.CREATED);
     }
 
     @Operation(summary = "Update a department")
@@ -79,15 +83,16 @@ public class DepartmentController {
     	@ApiResponse(responseCode = "404", description = "Not Found", content = @Content)
     })
     @PutMapping(path = "/{department_id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Department> update(@PathVariable(name = "department_id") Long id,
-                                             @RequestBody Department department) {
-        department.setId(id);
-        department = departmentService.update(department);
+    public ResponseEntity<?> update(@PathVariable(name = "department_id") Long id,
+                                             @RequestBody DepartmentDTO departmentDTO) {
+        departmentDTO.setId(id);
+        Department department = departmentService.update(DepartmentDTO.toEntity(departmentDTO));
         if (department == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } else {
-            return new ResponseEntity<>(department, HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiError(HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.getReasonPhrase(), "Departamento não encontrado."));
         }
+
+        return new ResponseEntity<>(DepartmentDTO.fromEntity(department), HttpStatus.OK);
     }
 
     @Operation(summary = "Delete a department")
