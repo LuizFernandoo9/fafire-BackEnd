@@ -2,8 +2,12 @@ package com.project.professor_allocation.dto;
 
 import com.project.professor_allocation.model.Course;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class CourseDTO {
     private Long id;
+
+    @NotBlank(message = "Nome e obrigatorio.")
     private String name;
 
     public CourseDTO() {

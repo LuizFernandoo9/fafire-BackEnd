@@ -7,12 +7,27 @@ import com.project.professor_allocation.model.Allocation;
 import com.project.professor_allocation.model.Course;
 import com.project.professor_allocation.model.Professor;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 public class AllocationDTO {
     private Long id;
+
+    @NotNull(message = "Dia da semana e obrigatorio.")
     private DayOfWeek dayOfWeek;
+
+    @NotNull(message = "Horario inicial e obrigatorio.")
     private LocalTime startHour;
+
+    @NotNull(message = "Horario final e obrigatorio.")
     private LocalTime endHour;
+
+    @NotNull(message = "Professor e obrigatorio.")
+    @Positive(message = "Professor deve ser um identificador positivo.")
     private Long professorId;
+
+    @NotNull(message = "Curso e obrigatorio.")
+    @Positive(message = "Curso deve ser um identificador positivo.")
     private Long courseId;
 
     public AllocationDTO() {

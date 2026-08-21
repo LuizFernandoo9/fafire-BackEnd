@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.project.professor_allocation.dto.DepartmentDTO;
 import com.project.professor_allocation.exception.ApiError;
@@ -21,9 +22,11 @@ import com.project.professor_allocation.service.DepartmentService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "Departments")
 @RestController
@@ -39,7 +42,7 @@ public class DepartmentController {
 
     @Operation(summary = "Find all departments")
     @ApiResponses({
-    	@ApiResponse(responseCode = "200", description = "OK")
+            @ApiResponse(responseCode = "200", description = "OK")
     })
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<DepartmentDTO>> findAll() {
@@ -50,16 +53,15 @@ public class DepartmentController {
 
     @Operation(summary = "Find a department")
     @ApiResponses({
-    	@ApiResponse(responseCode = "200", description = "OK"),
-    	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
-    	@ApiResponse(responseCode = "404", description = "Not Found", content = @Content)
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "404", description = "Not Found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiError.class)))
     })
     @GetMapping(path = "/{department_id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> findById(@PathVariable(name = "department_id") Long id) {
+    public ResponseEntity<DepartmentDTO> findById(@PathVariable(name = "department_id") Long id) {
         Department department = departmentService.findById(id);
         if (department == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiError(HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.getReasonPhrase(), "Departamento não encontrado."));
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Departamento não encontrado.");
         }
 
         return new ResponseEntity<>(DepartmentDTO.fromEntity(department), HttpStatus.OK);
@@ -67,29 +69,28 @@ public class DepartmentController {
 
     @Operation(summary = "Save a department")
     @ApiResponses({
-    	@ApiResponse(responseCode = "201", description = "Created"),
-    	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content)
+        @ApiResponse(responseCode = "201", description = "Created"),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiError.class)))
     })
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<DepartmentDTO> save(@RequestBody DepartmentDTO departmentDTO) {
+    public ResponseEntity<DepartmentDTO> save(@Valid @RequestBody DepartmentDTO departmentDTO) {
         Department department = departmentService.save(DepartmentDTO.toEntity(departmentDTO));
         return new ResponseEntity<>(DepartmentDTO.fromEntity(department), HttpStatus.CREATED);
     }
 
     @Operation(summary = "Update a department")
     @ApiResponses({
-    	@ApiResponse(responseCode = "200", description = "OK"),
-    	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
-    	@ApiResponse(responseCode = "404", description = "Not Found", content = @Content)
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "404", description = "Not Found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiError.class)))
     })
     @PutMapping(path = "/{department_id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> update(@PathVariable(name = "department_id") Long id,
-                                             @RequestBody DepartmentDTO departmentDTO) {
+    public ResponseEntity<DepartmentDTO> update(@PathVariable(name = "department_id") Long id,
+                                             @Valid @RequestBody DepartmentDTO departmentDTO) {
         departmentDTO.setId(id);
         Department department = departmentService.update(DepartmentDTO.toEntity(departmentDTO));
         if (department == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiError(HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.getReasonPhrase(), "Departamento não encontrado."));
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Departamento não encontrado.");
         }
 
         return new ResponseEntity<>(DepartmentDTO.fromEntity(department), HttpStatus.OK);
@@ -97,8 +98,8 @@ public class DepartmentController {
 
     @Operation(summary = "Delete a department")
     @ApiResponses({
-    	@ApiResponse(responseCode = "204", description = "No Content"),
-    	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content)
+        @ApiResponse(responseCode = "204", description = "No Content"),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiError.class)))
     })
     @DeleteMapping(path = "/{department_id}")
     public ResponseEntity<Void> deleteById(@PathVariable(name = "department_id") Long id) {
