@@ -175,6 +175,10 @@ A aplicação padroniza respostas de erro em um objeto `ApiError`, contendo:
 Isso facilita a integração com frontend ou clientes externos.
 
 ## Observações
+Alunos:
+Gustavo Gouveia - Implementação dos DTOs
+Luiz Fernando Barbosa - Implementação do Exception Handlers
+Thiago Cavalcanti - Implementação dos validadores
 
 Este projeto foi estruturado com foco em:
 
