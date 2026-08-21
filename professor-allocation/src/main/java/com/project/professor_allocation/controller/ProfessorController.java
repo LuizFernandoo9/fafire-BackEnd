@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.project.professor_allocation.dto.ProfessorDTO;
 import com.project.professor_allocation.exception.ApiError;
@@ -22,9 +23,11 @@ import com.project.professor_allocation.service.ProfessorService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "Professors")
 @RestController
@@ -51,16 +54,15 @@ public class ProfessorController {
 
     @Operation(summary = "Find a professor")
     @ApiResponses({
-    	@ApiResponse(responseCode = "200", description = "OK"),
-    	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
-    	@ApiResponse(responseCode = "404", description = "Not Found", content = @Content)
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "404", description = "Not Found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiError.class)))
     })
     @GetMapping(path = "/{professor_id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> findById(@PathVariable(name = "professor_id") Long id) {
+    public ResponseEntity<ProfessorDTO> findById(@PathVariable(name = "professor_id") Long id) {
         Professor professor = professorService.findById(id);
         if (professor == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiError(HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.getReasonPhrase(), "Professor não encontrado."));
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Professor não encontrado.");
         }
 
         return new ResponseEntity<>(ProfessorDTO.fromEntity(professor), HttpStatus.OK);
@@ -68,8 +70,8 @@ public class ProfessorController {
 
     @Operation(summary = "Find professors by department")
     @ApiResponses({
-    	@ApiResponse(responseCode = "200", description = "OK"),
-    	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content)
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiError.class)))
     })
     @GetMapping(path = "/department/{department_id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ProfessorDTO>> findByDepartment(@PathVariable(name = "department_id") Long id) {
@@ -80,29 +82,28 @@ public class ProfessorController {
 
     @Operation(summary = "Save a professor")
     @ApiResponses({
-    	@ApiResponse(responseCode = "201", description = "Created"),
-    	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content)
+        @ApiResponse(responseCode = "201", description = "Created"),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiError.class)))
     })
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ProfessorDTO> save(@RequestBody ProfessorDTO professorDTO) {
+    public ResponseEntity<ProfessorDTO> save(@Valid @RequestBody ProfessorDTO professorDTO) {
         Professor professor = professorService.save(ProfessorDTO.toEntity(professorDTO));
         return new ResponseEntity<>(ProfessorDTO.fromEntity(professor), HttpStatus.CREATED);
     }
 
     @Operation(summary = "Update a professor")
     @ApiResponses({
-    	@ApiResponse(responseCode = "200", description = "OK"),
-    	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
-    	@ApiResponse(responseCode = "404", description = "Not Found", content = @Content)
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "404", description = "Not Found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiError.class)))
     })
     @PutMapping(path = "/{professor_id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> update(@PathVariable(name = "professor_id") Long id,
-                                            @RequestBody ProfessorDTO professorDTO) {
+    public ResponseEntity<ProfessorDTO> update(@PathVariable(name = "professor_id") Long id,
+                                            @Valid @RequestBody ProfessorDTO professorDTO) {
         professorDTO.setId(id);
         Professor professor = professorService.update(ProfessorDTO.toEntity(professorDTO));
         if (professor == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiError(HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.getReasonPhrase(), "Professor não encontrado."));
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Professor não encontrado.");
         }
 
         return new ResponseEntity<>(ProfessorDTO.fromEntity(professor), HttpStatus.OK);
@@ -110,8 +111,8 @@ public class ProfessorController {
 
     @Operation(summary = "Delete a professor")
     @ApiResponses({
-    	@ApiResponse(responseCode = "204", description = "No Content"),
-    	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content)
+        @ApiResponse(responseCode = "204", description = "No Content"),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiError.class)))
     })
     @DeleteMapping(path = "/{professor_id}")
     public ResponseEntity<Void> deleteById(@PathVariable(name = "professor_id") Long id) {

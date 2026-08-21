@@ -6,6 +6,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -29,6 +30,15 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
 	public ResponseEntity<ApiError> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
 		String message = String.format("O parâmetro '%s' possui um valor inválido: '%s'.", e.getName(), e.getValue());
+		return buildResponse(HttpStatus.BAD_REQUEST, message);
+	}
+
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	public ResponseEntity<ApiError> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+		String message = e.getBindingResult().getFieldErrors().stream()
+				.map(error -> String.format("%s: %s", error.getField(), error.getDefaultMessage()))
+				.findFirst()
+				.orElse("Requisicao invalida.");
 		return buildResponse(HttpStatus.BAD_REQUEST, message);
 	}
 

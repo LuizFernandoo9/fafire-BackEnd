@@ -3,10 +3,25 @@ package com.project.professor_allocation.dto;
 import com.project.professor_allocation.model.Department;
 import com.project.professor_allocation.model.Professor;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+
 public class ProfessorDTO {
     private Long id;
+
+    @NotBlank(message = "Nome e obrigatorio.")
     private String name;
+
+    @NotBlank(message = "CPF e obrigatorio.")
+    @Size(min = 11, max = 11, message = "CPF deve possuir 11 caracteres.")
+    @Pattern(regexp = "\\d{11}", message = "CPF deve possuir apenas numeros.")
     private String cpf;
+
+    @NotNull(message = "Departamento e obrigatorio.")
+    @Positive(message = "Departamento deve ser um identificador positivo.")
     private Long departmentId;
 
     public ProfessorDTO() {
